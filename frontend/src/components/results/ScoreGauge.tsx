@@ -23,17 +23,19 @@ function getScoreColor(score: number): string {
 
 export function ScoreGauge({ score, size = 'md' }: ScoreGaugeProps) {
   const colorClasses = getScoreColor(score);
+  // Round to whole number for display
+  const displayScore = Math.round(score);
 
   return (
     <div
       className={`
         ${sizeStyles[size]}
         ${colorClasses}
-        rounded-full flex items-center justify-center font-semibold
+        rounded-full flex items-center justify-center font-semibold flex-shrink-0
       `}
-      title={`Fit Score: ${score}`}
+      title={`Fit Score: ${score.toFixed(1)}`}
     >
-      {score}
+      {displayScore}
     </div>
   );
 }

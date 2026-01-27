@@ -28,14 +28,9 @@ function HomePage() {
               <p className="mt-2 text-gray-500">
                 Match loan applications with the best lender policies.
               </p>
-              <div className="mt-6 flex justify-center gap-4">
+              <div className="mt-6">
                 <Link to="/apply">
                   <Button size="lg">Start New Application</Button>
-                </Link>
-                <Link to="/admin/lenders">
-                  <Button size="lg" variant="secondary">
-                    Manage Lenders
-                  </Button>
                 </Link>
               </div>
             </div>

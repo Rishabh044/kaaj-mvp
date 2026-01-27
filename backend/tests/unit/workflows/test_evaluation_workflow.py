@@ -131,7 +131,7 @@ class TestPersistAndRankResults:
             ],
         })
 
-        result = await workflow.persist_and_rank_results(context)
+        result = await workflow.rank_results(context)
 
         assert result["status"] == "completed"
         ranked = result["ranked_matches"]
@@ -161,7 +161,7 @@ class TestPersistAndRankResults:
             ],
         })
 
-        result = await workflow.persist_and_rank_results(context)
+        result = await workflow.rank_results(context)
 
         assert result["status"] == "completed"
         ranked = result["ranked_matches"]
@@ -178,6 +178,6 @@ class TestPersistAndRankResults:
         context = MockHatchetContext({})
         context.set_step_output("evaluate_all_lenders", {"skipped": True, "reason": "Derivation skipped"})
 
-        result = await workflow.persist_and_rank_results(context)
+        result = await workflow.rank_results(context)
 
         assert result["status"] == "skipped"
