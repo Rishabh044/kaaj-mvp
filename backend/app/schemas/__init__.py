@@ -1,5 +1,32 @@
 """Pydantic schemas for API request/response validation."""
 
+from app.schemas.api import (
+    # Application API schemas
+    ApplicantInput,
+    ApplicationListItem,
+    ApplicationStatusResponse as ApiApplicationStatusResponse,
+    ApplicationSubmitRequest,
+    ApplicationSubmitResponse,
+    BusinessCreditInput,
+    BusinessInput,
+    CreditHistoryInput as ApiCreditHistoryInput,
+    CriterionResultResponse,
+    EquipmentInput as ApiEquipmentInput,
+    LenderMatchResponse,
+    LoanRequestInput,
+    MatchingResultsResponse as ApiMatchingResultsResponse,
+    PaginatedListResponse,
+    # Lender API schemas
+    CriteriaDetail,
+    LenderCreateRequest,
+    LenderDetailResponse,
+    LenderListItem,
+    LenderStatusResponse,
+    LenderUpdateRequest,
+    ProgramDetail,
+    ProgramSummary,
+    RestrictionsDetail,
+)
 from app.schemas.application import (
     ApplicationStatusResponse,
     CreditHistoryInput,
@@ -72,7 +99,7 @@ __all__ = [
     "GuarantorUpdate",
     "GuarantorResponse",
     "GuarantorSummary",
-    # Application
+    # Application (Domain)
     "EquipmentInput",
     "CreditHistoryInput",
     "LoanApplicationInput",
@@ -86,7 +113,7 @@ __all__ = [
     "LenderResponse",
     "LenderSummary",
     "LenderDetail",
-    # Matching
+    # Matching (Domain)
     "CriterionResult",
     "MatchResultResponse",
     "MatchResultSummary",
@@ -94,4 +121,29 @@ __all__ = [
     "LenderMatchResult",
     "ProgramEvaluationResult",
     "RestrictionResult",
+    # API Request/Response - Applications
+    "ApplicantInput",
+    "BusinessInput",
+    "ApiCreditHistoryInput",
+    "ApiEquipmentInput",
+    "LoanRequestInput",
+    "BusinessCreditInput",
+    "ApplicationSubmitRequest",
+    "ApplicationSubmitResponse",
+    "ApplicationListItem",
+    "ApiApplicationStatusResponse",
+    "CriterionResultResponse",
+    "LenderMatchResponse",
+    "ApiMatchingResultsResponse",
+    "PaginatedListResponse",
+    # API Request/Response - Lenders
+    "ProgramSummary",
+    "LenderListItem",
+    "CriteriaDetail",
+    "ProgramDetail",
+    "RestrictionsDetail",
+    "LenderDetailResponse",
+    "LenderCreateRequest",
+    "LenderUpdateRequest",
+    "LenderStatusResponse",
 ]

@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import api_router
 from app.core.config import settings
 
 
@@ -51,6 +52,9 @@ def create_app() -> FastAPI:
     async def root() -> dict[str, str]:
         """Root endpoint."""
         return {"message": "Lender Matching Platform API"}
+
+    # Include API routes
+    app.include_router(api_router, prefix="/api/v1")
 
     return app
 
