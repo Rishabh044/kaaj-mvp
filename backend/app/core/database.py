@@ -9,15 +9,12 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import declarative_base
 
 from app.core.config import settings
 
 
-class Base(DeclarativeBase):
-    """Base class for all SQLAlchemy models."""
-
-    pass
+Base = declarative_base()
 
 
 # Create async engine
