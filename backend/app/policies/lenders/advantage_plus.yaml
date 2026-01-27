@@ -1,0 +1,94 @@
+# Advantage+ Financing - Broker Ideal Customer Profile
+# Source: Advantage++Broker+2025.pdf
+# Non-Trucking Applications Only up to $75,000
+
+id: advantage_plus
+name: "Advantage+ Financing"
+version: 1
+description: "Direct business lender for non-trucking equipment up to $75,000 with strict credit requirements"
+contact_email: "SalesSupport@advantageplusfinancing.com"
+contact_phone: "262-439-7600"
+
+restrictions:
+  geographic:
+    excluded_states: []  # No state restrictions mentioned
+  industry:
+    excluded_industries:
+      - trucking
+      - transportation
+      - otr  # Over the road
+      - logging
+  transaction:
+    allows_private_party: true
+    allows_sale_leaseback: true
+    allows_refinance: true
+  equipment:
+    excluded_categories:
+      - class_8_truck
+      - class_8_trailer
+      - semi_truck
+      - tractor_trailer
+
+programs:
+  - id: established_business
+    name: "Established Business Program"
+    description: "For businesses with 2+ years in operation and clean credit"
+    is_app_only: true
+    min_amount: 1000000   # $10,000 minimum
+    max_amount: 7500000   # $75,000 maximum
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico  # FICO v5 (Equifax)
+        min: 680
+      business:
+        min_time_in_business_years: 2
+        min_industry_experience_years: 3
+        requires_us_citizen: true
+      credit_history:
+        max_bankruptcies: 0  # No bankruptcies allowed
+        allows_active_bankruptcy: false
+        max_open_judgements: 0  # No judgements
+        allows_foreclosure: false
+        allows_repossession: false
+        max_tax_liens: 0  # No tax liens
+        max_collections_years: 3  # No collections in past 3 years
+      equipment:
+        # No age or mileage restrictions per policy
+        max_age_years: null
+        max_mileage: null
+
+  - id: startup_business
+    name: "Start-Up Business Program"
+    description: "For new businesses with strong personal credit and industry experience"
+    is_app_only: true
+    min_amount: 1000000   # $10,000 minimum
+    max_amount: 7500000   # $75,000 maximum
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 700  # Higher score required for startups
+      business:
+        min_time_in_business_years: 0  # Startup allowed
+        min_industry_experience_years: 3  # 3 years industry experience required
+        requires_us_citizen: true
+      credit_history:
+        max_bankruptcies: 0
+        allows_active_bankruptcy: false
+        max_open_judgements: 0
+        allows_foreclosure: false
+        allows_repossession: false
+        max_tax_liens: 0
+        max_collections_years: 3
+      equipment:
+        max_age_years: null
+        max_mileage: null
+      # Note: 10% down + 10% security deposit required for startups (not modeled)
+
+scoring:
+  credit_score_weight: 0.35
+  time_in_business_weight: 0.20
+  loan_amount_weight: 0.15
+  equipment_fit_weight: 0.10
+  credit_history_weight: 0.20

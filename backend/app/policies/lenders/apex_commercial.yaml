@@ -1,0 +1,247 @@
+# Apex Commercial Capital - Equipment Finance Broker Rate Table
+# Source: Apex EF Broker Guidelines_082725.pdf
+# Effective August 21, 2025
+
+id: apex_commercial
+name: "Apex Commercial Capital"
+version: 1
+description: "Equipment finance with standard, medical, and A+ pricing tiers"
+contact_email: "credit@apexcommercial.com"
+contact_phone: "267-470-3118"
+
+restrictions:
+  geographic:
+    excluded_states:
+      - CA
+      - NV
+      - ND
+      - VT
+  industry:
+    excluded_industries:
+      - aircraft
+      - boats
+      - marine
+      - atm
+      - audio_visual
+      - cannabis
+      - marijuana
+      - casino
+      - gambling
+      - church
+      - non_profit
+      - nonprofit
+      - copiers
+      - electric_vehicles
+      - ev
+      - fad_medical
+      - furniture
+      - kiosk
+      - leasehold_improvements
+      - logging
+      - nail_salon
+      - petroleum
+      - oil_gas
+      - signage
+      - tanning
+      - trucking
+      - transportation
+      - otr
+  transaction:
+    allows_private_party: false  # No private party sales
+    allows_sale_leaseback: false  # No sale-leasebacks
+    allows_refinance: true
+  equipment:
+    max_age_years: 15  # Equipment over 15 years old excluded
+
+programs:
+  # Standard pricing programs with personal guarantee
+  - id: standard_a_rate
+    name: "Standard A Rate"
+    description: "Best standard rates for established businesses with excellent credit"
+    is_app_only: true
+    min_amount: 1000000   # $10,000
+    max_amount: 20000000  # $200,000 app-only
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 700
+      business:
+        min_time_in_business_years: 5
+      credit_history:
+        max_bankruptcies: 0
+        allows_active_bankruptcy: false
+      equipment:
+        max_age_years: 15
+      # Note: PayNet 660+ also preferred
+
+  - id: standard_b_rate
+    name: "Standard B Rate"
+    description: "Good rates for businesses with solid credit"
+    is_app_only: true
+    min_amount: 1000000
+    max_amount: 10000000  # $100,000 app-only
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 670
+      business:
+        min_time_in_business_years: 3
+      credit_history:
+        max_bankruptcies: 0
+        allows_active_bankruptcy: false
+      equipment:
+        max_age_years: 15
+      # Note: PayNet 650+ also preferred
+
+  - id: standard_c_rate
+    name: "Standard C Rate"
+    description: "Entry tier for newer businesses - requires bank statements"
+    is_app_only: false  # 3 months bank statements required
+    min_amount: 1000000
+    max_amount: 10000000  # $100,000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 640
+      business:
+        min_time_in_business_years: 2
+      credit_history:
+        max_bankruptcies: 0
+        allows_active_bankruptcy: false
+      equipment:
+        max_age_years: 15
+      # Note: PayNet 640+ also preferred
+
+  # A+ Pricing programs (select industries)
+  - id: a_plus_rate
+    name: "A+ Rate Program"
+    description: "Premium rates for select industries with newer equipment"
+    is_app_only: true
+    min_amount: 1000000
+    max_amount: 20000000  # $200,000 app-only
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 720
+      business:
+        min_time_in_business_years: 5
+      credit_history:
+        max_bankruptcies: 0
+        allows_active_bankruptcy: false
+      equipment:
+        max_age_years: 5  # Max 5 years for A+ program
+        allowed_categories:
+          - landscaping
+          - arbor
+          - automotive_repair
+          - construction
+          - trade_contractors
+          - commercial_cleaning
+          - industrial_cleaning
+          - forklift
+          - industrial_machinery
+          - machine_tools
+          - medical
+          - dental
+          - veterinarian
+          - vocational_trucks
+          - waste_management
+      industry:
+        allowed_industries:
+          - landscaping
+          - arbor
+          - automotive_repair
+          - construction
+          - trade_contractors
+          - cleaning
+          - industrial
+          - medical
+          - dental
+          - veterinary
+          - waste_management
+      # Note: No private party sales for A+ program
+
+  # Medical pricing programs
+  - id: medical_a_rate
+    name: "Medical A Rate"
+    description: "Best rates for established medical practices"
+    is_app_only: true
+    min_amount: 1000000
+    max_amount: 20000000  # $200,000 app-only
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 700
+      business:
+        min_time_in_business_years: 5  # 5 years licensed
+      credit_history:
+        max_bankruptcies: 0
+        allows_active_bankruptcy: false
+      industry:
+        allowed_industries:
+          - medical
+          - dental
+          - veterinary
+          - optometry
+          - podiatry
+          - healthcare
+      equipment:
+        max_age_years: 15
+        # Note: Essential use equipment for the practice required
+
+  - id: medical_b_rate
+    name: "Medical B Rate"
+    description: "Good rates for newer medical practices"
+    is_app_only: true
+    min_amount: 1000000
+    max_amount: 10000000  # $100,000 app-only
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 670
+      business:
+        min_time_in_business_years: 2  # 2 years licensed
+      credit_history:
+        max_bankruptcies: 0
+        allows_active_bankruptcy: false
+      industry:
+        allowed_industries:
+          - medical
+          - dental
+          - veterinary
+          - optometry
+          - podiatry
+          - healthcare
+      equipment:
+        max_age_years: 15
+
+  # Corporate Only (no personal guarantee)
+  - id: corp_only
+    name: "Corporate Only"
+    description: "No personal guarantee for established corporations"
+    is_app_only: false  # Requires financials
+    min_amount: 1000000
+    max_amount: 50000000  # $500,000
+    max_term_months: 60
+    criteria:
+      business:
+        min_time_in_business_years: 5
+        # Note: $3MM annual sales, profitability, and adequate cash flow required
+      credit_history:
+        max_bankruptcies: 0
+        allows_active_bankruptcy: false
+      equipment:
+        max_age_years: 15
+
+scoring:
+  credit_score_weight: 0.30
+  time_in_business_weight: 0.25
+  loan_amount_weight: 0.15
+  equipment_fit_weight: 0.15
+  credit_history_weight: 0.15

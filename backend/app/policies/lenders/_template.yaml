@@ -1,0 +1,77 @@
+# Lender Policy Template
+# Copy this file and rename to {lender_id}.yaml
+
+id: lender_id  # Must match filename (without .yaml)
+name: "Lender Display Name"
+version: 1
+description: "Brief description of the lender"
+contact_email: "submissions@lender.com"
+contact_phone: "555-555-5555"
+
+# Global restrictions apply to ALL programs
+restrictions:
+  geographic:
+    excluded_states: []  # e.g., ["CA", "NY"]
+  industry:
+    excluded_industries: []  # e.g., ["cannabis", "gambling"]
+  transaction:
+    allows_private_party: true
+    allows_sale_leaseback: true
+    allows_refinance: true
+
+# Equipment term matrices (optional)
+# Define term limits based on equipment age/mileage
+equipment_matrices:
+  - category: "class_8_truck"
+    entries:
+      - min_year: 2020
+        max_mileage: 200000
+        term_months: 60
+      - min_year: 2016
+        max_year: 2019
+        max_mileage: 400000
+        term_months: 48
+
+# Lending programs
+programs:
+  - id: program_1
+    name: "Program Name"
+    description: "Program description"
+    is_app_only: true  # Application only (no full financials)
+    min_amount: 1000000  # $10,000 in cents
+    max_amount: 7500000  # $75,000 in cents
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico  # fico, transunion, paynet, experian, equifax
+        min: 700
+      business:
+        min_time_in_business_years: 2
+        requires_homeowner: true
+        requires_cdl: conditional  # true, false, conditional
+        min_cdl_years: 5
+        min_industry_experience_years: 5
+        min_fleet_size: null
+        requires_us_citizen: true
+      credit_history:
+        max_bankruptcies: 0
+        bankruptcy_min_discharge_years: 5
+        allows_active_bankruptcy: false
+        max_open_judgements: 0
+        allows_foreclosure: false
+        allows_repossession: true
+        max_tax_liens: 0
+      equipment:
+        max_age_years: 10
+        max_mileage: 500000
+      loan_amount:
+        min_amount: 1000000
+        max_amount: 7500000
+
+# Custom scoring weights (optional)
+scoring:
+  credit_score_weight: 0.3
+  time_in_business_weight: 0.2
+  loan_amount_weight: 0.2
+  equipment_fit_weight: 0.15
+  credit_history_weight: 0.15
