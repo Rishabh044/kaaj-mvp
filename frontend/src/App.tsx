@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { ApplicationPage } from './pages';
+import { Button } from './components/ui';
 
 function HomePage() {
   return (
@@ -20,6 +22,11 @@ function HomePage() {
               <p className="mt-2 text-gray-500">
                 Match loan applications with the best lender policies.
               </p>
+              <div className="mt-6">
+                <Link to="/apply">
+                  <Button size="lg">Start New Application</Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -33,6 +40,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/apply" element={<ApplicationPage />} />
+        <Route path="/results/:applicationId" element={<div>Results Page (PR-9)</div>} />
       </Routes>
     </BrowserRouter>
   );
