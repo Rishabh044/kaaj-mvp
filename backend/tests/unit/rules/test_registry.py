@@ -24,12 +24,66 @@ class MockRule(Rule):
         )
 
 
+# =============================================================================
+# Registry State Management for Test Isolation
+# =============================================================================
+#
+# The RuleRegistry uses class-level attributes (_rules and _instances) to store
+# registered rules globally. This is by design - rules are registered once at
+# module import time via decorators and shared across the application.
+#
+# However, this creates a test isolation problem:
+#
+# 1. When the app starts, all rule modules are imported, triggering @RuleRegistry.register
+#    decorators that populate the registry with rules like "credit_score", "business", etc.
+#
+# 2. These registry tests need to call RuleRegistry.clear() to test registration behavior
+#    in isolation (e.g., verifying that registering a rule adds it to an empty registry).
+#
+# 3. Without backup/restore, calling clear() would remove ALL rules globally, causing
+#    subsequent tests (like test_matching_engine.py) to fail with:
+#    "KeyError: No rule registered with name: credit_score"
+#
+# 4. Pytest does not guarantee test file execution order, so registry tests might run
+#    before or after other tests that depend on the global rule registrations.
+#
+# Solution: Each test class that modifies the registry:
+#   - Backs up the current state in setup_method()
+#   - Performs its isolated test operations (clear, register test rules, etc.)
+#   - Restores the original state in teardown_method()
+#
+# This ensures that registry modifications in these tests don't leak into other tests.
+# =============================================================================
+
+
+def _backup_registry() -> tuple[dict, dict]:
+    """Backup current registry state.
+
+    Returns a shallow copy of both the rules dict and instances cache.
+    """
+    return dict(RuleRegistry._rules), dict(RuleRegistry._instances)
+
+
+def _restore_registry(backup: tuple[dict, dict]) -> None:
+    """Restore registry from a previous backup.
+
+    Replaces the class-level dicts with the backed-up versions.
+    """
+    RuleRegistry._rules = backup[0]
+    RuleRegistry._instances = backup[1]
+
+
 class TestRegisterDecorator:
     """Tests for register decorator."""
 
     def setup_method(self):
-        """Clear registry before each test."""
+        """Backup and clear registry before each test."""
+        self._backup = _backup_registry()
         RuleRegistry.clear()
+
+    def teardown_method(self):
+        """Restore registry after each test."""
+        _restore_registry(self._backup)
 
     def test_register_decorator(self):
         """Test registering a rule with decorator."""
@@ -65,9 +119,14 @@ class TestGetRegisteredRule:
     """Tests for getting registered rules."""
 
     def setup_method(self):
-        """Set up registry with a test rule."""
+        """Backup, clear registry, and set up with a test rule."""
+        self._backup = _backup_registry()
         RuleRegistry.clear()
         RuleRegistry.register("mock_rule")(MockRule)
+
+    def teardown_method(self):
+        """Restore registry after each test."""
+        _restore_registry(self._backup)
 
     def test_get_registered_rule(self):
         """Test getting a registered rule."""
@@ -90,8 +149,13 @@ class TestGetUnregisteredRuleRaises:
     """Tests for getting unregistered rules."""
 
     def setup_method(self):
-        """Clear registry before each test."""
+        """Backup and clear registry before each test."""
+        self._backup = _backup_registry()
         RuleRegistry.clear()
+
+    def teardown_method(self):
+        """Restore registry after each test."""
+        _restore_registry(self._backup)
 
     def test_get_unregistered_rule_raises(self):
         """Test that getting an unregistered rule raises KeyError."""
@@ -109,7 +173,8 @@ class TestListAllRules:
     """Tests for listing all rules."""
 
     def setup_method(self):
-        """Clear and populate registry."""
+        """Backup, clear, and populate registry."""
+        self._backup = _backup_registry()
         RuleRegistry.clear()
 
         @RuleRegistry.register("rule_a")
@@ -119,6 +184,10 @@ class TestListAllRules:
         @RuleRegistry.register("rule_b")
         class RuleB(MockRule):
             pass
+
+    def teardown_method(self):
+        """Restore registry after each test."""
+        _restore_registry(self._backup)
 
     def test_list_all_rules(self):
         """Test listing all registered rules."""
@@ -135,6 +204,14 @@ class TestListAllRules:
 
 class TestClearRegistry:
     """Tests for clearing the registry."""
+
+    def setup_method(self):
+        """Backup registry before each test."""
+        self._backup = _backup_registry()
+
+    def teardown_method(self):
+        """Restore registry after each test."""
+        _restore_registry(self._backup)
 
     def test_clear_removes_all_rules(self):
         """Test that clear removes all rules."""
