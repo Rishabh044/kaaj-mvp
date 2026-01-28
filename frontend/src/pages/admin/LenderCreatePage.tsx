@@ -6,16 +6,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { LenderForm } from '../../components/admin';
 import { createLender } from '../../api';
-import type { LenderCreate } from '../../types';
+import type { LenderCreate, LenderUpdate } from '../../types';
 
 export function LenderCreatePage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (data: LenderCreate) => {
+  const handleSubmit = async (data: LenderCreate | LenderUpdate) => {
     try {
       setError(null);
-      await createLender(data);
+      // In create mode, data will always be LenderCreate
+      await createLender(data as LenderCreate);
       navigate('/admin/lenders');
     } catch (err) {
       if (err && typeof err === 'object' && 'message' in err) {

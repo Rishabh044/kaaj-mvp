@@ -1,0 +1,129 @@
+{
+  "standard_application": {
+    "applicant": {
+      "fico_score": 720,
+      "is_homeowner": true,
+      "is_us_citizen": true,
+      "has_cdl": false
+    },
+    "business": {
+      "name": "Test Business LLC",
+      "state": "TX",
+      "years_in_business": 5.0
+    },
+    "credit_history": {
+      "has_bankruptcy": false,
+      "has_open_judgements": false,
+      "has_foreclosure": false,
+      "has_repossession": false,
+      "has_tax_liens": false
+    },
+    "equipment": {
+      "category": "construction",
+      "year": 2022,
+      "condition": "used"
+    },
+    "loan_request": {
+      "amount": 5000000,
+      "transaction_type": "purchase",
+      "is_private_party": false
+    }
+  },
+  "trucking_application": {
+    "applicant": {
+      "fico_score": 680,
+      "is_homeowner": false,
+      "is_us_citizen": true,
+      "has_cdl": true,
+      "cdl_years": 5,
+      "industry_experience_years": 8
+    },
+    "business": {
+      "name": "Highway Freight LLC",
+      "state": "TX",
+      "years_in_business": 3.0,
+      "fleet_size": 5
+    },
+    "credit_history": {
+      "has_bankruptcy": false,
+      "has_open_judgements": false,
+      "has_foreclosure": false,
+      "has_repossession": false,
+      "has_tax_liens": false
+    },
+    "equipment": {
+      "category": "class_8_truck",
+      "year": 2021,
+      "condition": "used",
+      "mileage": 150000
+    },
+    "loan_request": {
+      "amount": 12000000,
+      "transaction_type": "purchase",
+      "is_private_party": false
+    }
+  },
+  "startup_application": {
+    "applicant": {
+      "fico_score": 750,
+      "is_homeowner": true,
+      "is_us_citizen": true,
+      "has_cdl": false,
+      "industry_experience_years": 10
+    },
+    "business": {
+      "name": "New Venture Corp",
+      "state": "FL",
+      "years_in_business": 0.5
+    },
+    "credit_history": {
+      "has_bankruptcy": false,
+      "has_open_judgements": false,
+      "has_foreclosure": false,
+      "has_repossession": false,
+      "has_tax_liens": false
+    },
+    "equipment": {
+      "category": "medical",
+      "year": 2023,
+      "condition": "new"
+    },
+    "loan_request": {
+      "amount": 3000000,
+      "transaction_type": "purchase",
+      "is_private_party": false
+    }
+  },
+  "challenged_credit_application": {
+    "applicant": {
+      "fico_score": 620,
+      "is_homeowner": false,
+      "is_us_citizen": true,
+      "has_cdl": false
+    },
+    "business": {
+      "name": "Second Chance LLC",
+      "state": "TX",
+      "years_in_business": 7.0
+    },
+    "credit_history": {
+      "has_bankruptcy": true,
+      "bankruptcy_discharge_years": 4,
+      "bankruptcy_chapter": "7",
+      "has_open_judgements": false,
+      "has_foreclosure": false,
+      "has_repossession": false,
+      "has_tax_liens": false
+    },
+    "equipment": {
+      "category": "vocational",
+      "year": 2020,
+      "condition": "used"
+    },
+    "loan_request": {
+      "amount": 4500000,
+      "transaction_type": "purchase",
+      "is_private_party": false
+    }
+  }
+}

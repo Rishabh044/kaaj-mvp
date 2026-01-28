@@ -22,7 +22,7 @@ export function MatchingResults({ applicationId }: MatchingResultsProps) {
 
   useEffect(() => {
     let isMounted = true;
-    let pollInterval: NodeJS.Timeout | null = null;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
 
     const fetchStatus = async () => {
       try {

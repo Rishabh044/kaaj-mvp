@@ -1,15 +1,16 @@
 """Application API endpoints."""
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
-    get_db,
-    get_matching_service,
-    get_hatchet_client,
     PaginationParams,
+    get_db,
+    get_hatchet_client,
+    get_matching_service,
 )
-from app.rules.context_builder import build_evaluation_context
 from app.schemas.api import (
     ApplicationListItem,
     ApplicationStatusResponse,
@@ -20,13 +21,16 @@ from app.schemas.api import (
     MatchingResultsResponse,
     PaginatedListResponse,
 )
+from app.services.application_db_manager import ApplicationDBManager
 from app.services.matching_service import LenderMatchingService
 from app.workflows.triggers import trigger_evaluation
 
 router = APIRouter()
 
 
-@router.post("/", response_model=ApplicationSubmitResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=ApplicationSubmitResponse, status_code=status.HTTP_201_CREATED
+)
 async def submit_application(
     application_input: ApplicationSubmitRequest,
     db: AsyncSession = Depends(get_db),
@@ -37,16 +41,15 @@ async def submit_application(
     This endpoint creates a new application record and triggers the
     evaluation workflow to match against lender policies.
     """
-    import uuid
-    from datetime import datetime
+    service = ApplicationDBManager(db)
 
-    # Generate application ID and number
-    application_id = str(uuid.uuid4())
-    application_number = f"APP-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+    # 1. Create DB records
+    loan_application = await service.create_application(application_input)
+    await db.commit()  # Commit BEFORE workflow (ensures record exists even if workflow fails)
 
-    # Build application data for workflow
+    # 2. Build workflow data with application_id
     application_data = {
-        "application_id": application_id,
+        "application_id": str(loan_application.id),
         "fico_score": application_input.applicant.fico_score,
         "state": application_input.business.state,
         "loan_amount": application_input.loan_request.amount,
@@ -99,12 +102,14 @@ async def submit_application(
         "requested_term_months": application_input.loan_request.requested_term_months,
     }
 
-    # Trigger evaluation workflow
-    workflow_run = await trigger_evaluation(application_id, application_data)
+    # 3. Trigger evaluation workflow (pass db for sync path)
+    workflow_run = await trigger_evaluation(
+        str(loan_application.id), application_data, db=db
+    )
 
     return ApplicationSubmitResponse(
-        id=application_id,
-        application_number=application_number,
+        id=str(loan_application.id),
+        application_number=loan_application.application_number,
         status="processing" if workflow_run.status == "running" else workflow_run.status,
         workflow_run_id=workflow_run.run_id,
         message="Application submitted successfully. Evaluation in progress.",
@@ -120,13 +125,25 @@ async def list_applications(
 
     Returns a paginated list of application summaries.
     """
-    # In production, this would query the database
-    # For now, return empty list
+    service = ApplicationDBManager(db)
+    applications, total = await service.list_applications(
+        pagination.skip, pagination.limit
+    )
+
+    items = [
+        ApplicationListItem(
+            id=str(app.id),
+            application_number=app.application_number,
+            business_name=app.business.legal_name,
+            loan_amount=app.loan_amount,
+            status=app.status,
+            created_at=app.created_at.isoformat(),
+        )
+        for app in applications
+    ]
+
     return PaginatedListResponse(
-        items=[],
-        total=0,
-        skip=pagination.skip,
-        limit=pagination.limit,
+        items=items, total=total, skip=pagination.skip, limit=pagination.limit
     )
 
 
@@ -140,11 +157,21 @@ async def get_application(
     Returns the complete application details including business,
     applicant, equipment, and loan request information.
     """
-    # In production, this would query the database
-    # For now, raise not found
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Application {application_id} not found",
+    service = ApplicationDBManager(db)
+    app = await service.get_application(UUID(application_id))
+    if not app:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Application {application_id} not found",
+        )
+
+    return ApplicationListItem(
+        id=str(app.id),
+        application_number=app.application_number,
+        business_name=app.business.legal_name,
+        loan_amount=app.loan_amount,
+        status=app.status,
+        created_at=app.created_at.isoformat(),
     )
 
 
@@ -157,10 +184,24 @@ async def get_application_status(
 
     Returns the workflow status and summary of results if completed.
     """
-    # In production, this would check workflow status
+    service = ApplicationDBManager(db)
+    app = await service.get_application(UUID(application_id))
+    if not app:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Application {application_id} not found",
+        )
+
+    match_results = await service.get_match_results(app.id)
+    eligible = [m for m in match_results if m.is_eligible]
+
     return ApplicationStatusResponse(
         application_id=application_id,
-        status="completed",
+        status=app.status,
+        total_evaluated=len(match_results),
+        total_eligible=len(eligible),
+        best_match=eligible[0].lender_id if eligible else None,
+        processed_at=app.processed_at.isoformat() if app.processed_at else None,
     )
 
 
@@ -175,57 +216,45 @@ async def get_match_results(
     Returns detailed matching results including eligibility,
     scores, and criteria breakdown for each lender.
     """
-    # In production, this would query stored results
-    # For now, demonstrate with a sample evaluation
-
-    # Build a sample context for demonstration
-    context = build_evaluation_context(
-        application_id=application_id,
-        guarantor={"fico_score": 720, "is_homeowner": True},
-        business={"years_in_business": 5.0, "state": "TX"},
-        loan_request={"loan_amount": 5000000, "transaction_type": "purchase"},
-        equipment={"category": "construction", "year": 2022},
-    )
-
-    # Run matching
-    result = matching_service.match_application(context)
-
-    # Transform to response
-    matches = []
-    for m in result.matches:
-        criteria_results = []
-        if m.best_program:
-            for cr in m.best_program.criteria_results:
-                criteria_results.append(
-                    CriterionResultResponse(
-                        rule_name=cr.rule_name,
-                        passed=cr.passed,
-                        required_value=cr.required_value,
-                        actual_value=cr.actual_value,
-                        message=cr.message,
-                    )
-                )
-
-        matches.append(
-            LenderMatchResponse(
-                lender_id=m.lender_id,
-                lender_name=m.lender_name,
-                is_eligible=m.is_eligible,
-                fit_score=m.fit_score,
-                rank=m.rank,
-                best_program=m.best_program.program_name if m.best_program else None,
-                rejection_reasons=(
-                    m.global_rejection_reasons
-                    or (m.best_program.rejection_reasons if m.best_program else [])
-                ),
-                criteria_results=criteria_results,
-            )
+    service = ApplicationDBManager(db)
+    app = await service.get_application(UUID(application_id))
+    if not app:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Application {application_id} not found",
         )
+
+    match_results = await service.get_match_results(app.id)
+
+    matches = [
+        LenderMatchResponse(
+            lender_id=mr.lender_id,
+            lender_name=mr.lender.name if mr.lender else mr.lender_id,
+            is_eligible=mr.is_eligible,
+            fit_score=float(mr.fit_score),
+            rank=mr.rank,
+            best_program=mr.matched_program_name,
+            rejection_reasons=mr.rejection_reasons or [],
+            criteria_results=[
+                CriterionResultResponse(
+                    rule_name=v.get("rule_name", k),
+                    passed=v.get("passed", False),
+                    required_value=v.get("required_value", ""),
+                    actual_value=v.get("actual_value", ""),
+                    message=v.get("message", ""),
+                )
+                for k, v in (mr.criteria_results or {}).items()
+            ],
+        )
+        for mr in match_results
+    ]
+
+    eligible_matches = [m for m in matches if m.is_eligible]
 
     return MatchingResultsResponse(
         application_id=application_id,
-        total_evaluated=result.total_evaluated,
-        total_eligible=result.total_eligible,
-        best_match=matches[0] if result.has_eligible_lender else None,
+        total_evaluated=len(matches),
+        total_eligible=len(eligible_matches),
+        best_match=eligible_matches[0] if eligible_matches else None,
         matches=matches,
     )

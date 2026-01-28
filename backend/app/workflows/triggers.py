@@ -1,10 +1,14 @@
 """Workflow trigger utilities for starting and monitoring workflows."""
 
 import logging
-from typing import Any, Optional
-from uuid import uuid4
+from typing import Optional
+from uuid import UUID, uuid4
 
-from app.core.hatchet import get_hatchet, hatchet_available
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.hatchet import get_hatchet
+from app.policies.loader import PolicyLoader
+from app.services.application_db_manager import ApplicationDBManager
 from app.workflows.evaluation import ApplicationEvaluationWorkflow
 
 logger = logging.getLogger(__name__)
@@ -30,6 +34,7 @@ class WorkflowRun:
 async def trigger_evaluation(
     application_id: str,
     application_data: dict,
+    db: Optional[AsyncSession] = None,
 ) -> WorkflowRun:
     """Trigger the application evaluation workflow.
 
@@ -39,6 +44,7 @@ async def trigger_evaluation(
     Args:
         application_id: The unique application identifier.
         application_data: The application data to evaluate.
+        db: Optional SQLAlchemy async session for synchronous persistence.
 
     Returns:
         WorkflowRun with run ID and initial status.
@@ -73,10 +79,27 @@ async def trigger_evaluation(
         result = await workflow.run(application_data)
         workflow_run.status = result.get("status", "completed")
         workflow_run.result = result
+
+        # Persist results using SQLAlchemy
+        if db and result.get("status") == "completed":
+            db_manager = ApplicationDBManager(db)
+            await db_manager.update_status(UUID(application_id), "completed")
+            # Sync lenders to DB before saving match results (avoids FK violation)
+            policy_loader = PolicyLoader()
+            policies = policy_loader.load_all_policies(skip_errors=True)
+            await db_manager.sync_lenders(policies)
+            await db_manager.save_match_results(
+                UUID(application_id), result.get("ranked_matches", [])
+            )
+            # Note: Don't commit here - FastAPI's get_db() dependency auto-commits
+
     except Exception as e:
         logger.error(f"Workflow execution failed: {e}")
         workflow_run.status = "failed"
         workflow_run.result = {"error": str(e)}
+        if db:
+            db_manager = ApplicationDBManager(db)
+            await db_manager.update_status(UUID(application_id), "error")
 
     return workflow_run
 

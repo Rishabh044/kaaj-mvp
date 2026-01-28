@@ -4,9 +4,10 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Optional
 
-from sqlalchemy import Boolean, ForeignKey, Integer, String, func
+from sqlalchemy import JSON, Boolean, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import TypeDecorator
 
 from app.core.database import Base
 from app.models.base import UUIDMixin
@@ -14,6 +15,18 @@ from app.models.base import UUIDMixin
 if TYPE_CHECKING:
     from app.models.application import LoanApplication
     from app.models.lender import Lender
+
+
+class JSONBType(TypeDecorator):
+    """Type that uses JSONB on PostgreSQL and JSON elsewhere (e.g., SQLite for tests)."""
+
+    impl = JSON
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(JSONB())
+        return dialect.type_descriptor(JSON())
 
 
 class MatchResult(Base, UUIDMixin):
@@ -37,7 +50,7 @@ class MatchResult(Base, UUIDMixin):
     rank: Mapped[Optional[int]] = mapped_column(Integer)  # 1 = best match
 
     # Detailed Results (JSON)
-    criteria_results: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    criteria_results: Mapped[dict[str, Any]] = mapped_column(JSONBType, default=dict)
     # Structure:
     # {
     #   "credit_score": {
@@ -52,7 +65,7 @@ class MatchResult(Base, UUIDMixin):
     # }
 
     # Summary
-    rejection_reasons: Mapped[Optional[list[str]]] = mapped_column(JSONB, default=list)
+    rejection_reasons: Mapped[Optional[list[str]]] = mapped_column(JSONBType, default=list)
     # ["Credit score 650 below minimum 700", "State CA is restricted"]
 
     # Timestamps

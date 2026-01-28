@@ -2,19 +2,19 @@
 
 This workflow orchestrates the evaluation of a loan application against
 all lender policies, with steps for validation, feature derivation,
-lender evaluation, and result persistence.
+lender evaluation, and result ranking.
 """
 
-import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 from uuid import UUID
 
-from app.core.hatchet import get_hatchet, MockHatchetContext
+from app.core.database import async_session_factory
+from app.core.hatchet import MockHatchetContext, get_hatchet
 from app.policies.loader import PolicyLoader
 from app.rules.context_builder import build_evaluation_context
-from app.rules.engine import MatchingEngine
+from app.services.application_db_manager import ApplicationDBManager
 from app.services.matching_service import LenderMatchingService
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class ApplicationEvaluationWorkflow:
     1. validate_application - Validate required fields
     2. derive_features - Compute derived features (equipment age, etc.)
     3. evaluate_all_lenders - Evaluate against all lender policies
-    4. persist_and_rank_results - Persist results and compute rankings
+    4. rank_results - Compute final rankings
     """
 
     def __init__(
@@ -89,8 +89,8 @@ class ApplicationEvaluationWorkflow:
         evaluation_result = await self.evaluate_all_lenders(context)
         context.set_step_output("evaluate_all_lenders", evaluation_result)
 
-        # Step 4: Persist and rank
-        final_result = await self.persist_and_rank_results(context)
+        # Step 4: Rank results
+        final_result = await self.rank_results(context)
 
         return final_result
 
@@ -125,19 +125,23 @@ class ApplicationEvaluationWorkflow:
         fico_score = application_data.get("fico_score")
         if fico_score is not None:
             if not isinstance(fico_score, int) or fico_score < 300 or fico_score > 850:
-                errors.append({
-                    "field": "fico_score",
-                    "message": "FICO score must be between 300 and 850",
-                })
+                errors.append(
+                    {
+                        "field": "fico_score",
+                        "message": "FICO score must be between 300 and 850",
+                    }
+                )
 
         # Loan amount validation
         loan_amount = application_data.get("loan_amount")
         if loan_amount is not None:
             if not isinstance(loan_amount, int) or loan_amount <= 0:
-                errors.append({
-                    "field": "loan_amount",
-                    "message": "Loan amount must be a positive integer",
-                })
+                errors.append(
+                    {
+                        "field": "loan_amount",
+                        "message": "Loan amount must be a positive integer",
+                    }
+                )
 
         return {
             "is_valid": len(errors) == 0,
@@ -164,7 +168,9 @@ class ApplicationEvaluationWorkflow:
         # Equipment age
         equipment_year = application_data.get("equipment_year", 0)
         current_year = datetime.now().year
-        equipment_age_years = max(0, current_year - equipment_year) if equipment_year else 0
+        equipment_age_years = (
+            max(0, current_year - equipment_year) if equipment_year else 0
+        )
 
         # Years in business from formation date if provided
         years_in_business = application_data.get("years_in_business", 0)
@@ -174,7 +180,13 @@ class ApplicationEvaluationWorkflow:
 
         # Is trucking
         equipment_category = application_data.get("equipment_category", "").lower()
-        trucking_categories = {"class_8_truck", "trailer", "semi", "truck", "tractor_trailer"}
+        trucking_categories = {
+            "class_8_truck",
+            "trailer",
+            "semi",
+            "truck",
+            "tractor_trailer",
+        }
         is_trucking = equipment_category in trucking_categories
 
         return {
@@ -236,8 +248,8 @@ class ApplicationEvaluationWorkflow:
             "evaluated_at": datetime.utcnow().isoformat(),
         }
 
-    async def persist_and_rank_results(self, context) -> dict:
-        """Step 4: Persist results to database and compute final rankings.
+    async def rank_results(self, context) -> dict:
+        """Step 4: Compute final rankings for evaluation results.
 
         Args:
             context: Hatchet workflow context.
@@ -301,16 +313,19 @@ async def evaluate_all_lenders(context) -> dict:
     return await workflow.evaluate_all_lenders(context)
 
 
-async def persist_and_rank_results(context) -> dict:
-    """Persist and rank - standalone step function."""
+async def rank_results(context) -> dict:
+    """Rank results - standalone step function."""
     workflow = ApplicationEvaluationWorkflow()
-    return await workflow.persist_and_rank_results(context)
+    return await workflow.rank_results(context)
 
 
 # Register with Hatchet if available
 if hatchet:
     try:
-        @hatchet.workflow(name="application-evaluation", on_events=["application:submitted"])
+
+        @hatchet.workflow(
+            name="application-evaluation", on_events=["application:submitted"]
+        )
         class HatchetApplicationEvaluationWorkflow:
             """Hatchet-decorated workflow class."""
 
@@ -330,8 +345,50 @@ if hatchet:
                 return await self._workflow.evaluate_all_lenders(context)
 
             @hatchet.step(timeout="30s", parents=["evaluate_all_lenders"], retries=3)
-            async def persist_and_rank_results(self, context) -> dict:
-                return await self._workflow.persist_and_rank_results(context)
+            async def rank_results(self, context) -> dict:
+                """Rank results. Includes database persistence."""
+                # Run the ranking logic
+                result = await self._workflow.rank_results(context)
+
+                # Persist to database using SQLAlchemy (Hatchet worker creates own session)
+                try:
+                    application_id = context.workflow_input().get("application_id")
+                    if application_id:
+                        async with async_session_factory() as db:
+                            try:
+                                db_manager = ApplicationDBManager(db)
+                                await db_manager.update_status(
+                                    UUID(application_id), "completed"
+                                )
+                                # Sync lenders to DB before saving match results (avoids FK violation)
+                                policies = self._workflow.policy_loader.load_all_policies(
+                                    skip_errors=True
+                                )
+                                await db_manager.sync_lenders(policies)
+                                await db_manager.save_match_results(
+                                    UUID(application_id),
+                                    result.get("ranked_matches", []),
+                                )
+                                await db.commit()  # Explicit commit for Hatchet worker
+                            except Exception as e:
+                                await db.rollback()  # Rollback on error
+                                logger.error(f"SQLAlchemy persistence failed: {e}")
+                                # Update status to error
+                                try:
+                                    async with async_session_factory() as error_db:
+                                        db_manager = ApplicationDBManager(error_db)
+                                        await db_manager.update_status(
+                                            UUID(application_id), "error"
+                                        )
+                                        await error_db.commit()
+                                except Exception:
+                                    pass
+                                raise
+                except Exception as e:
+                    logger.error(f"Failed to persist results: {e}")
+                    # Don't fail the workflow step for persistence errors
+
+                return result
 
         logger.info("Registered ApplicationEvaluationWorkflow with Hatchet")
     except Exception as e:

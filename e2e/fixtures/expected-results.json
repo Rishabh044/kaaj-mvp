@@ -1,0 +1,26 @@
+{
+  "standard_application": {
+    "expected_eligible_count": 3,
+    "expected_best_match": "citizens_bank",
+    "expected_ineligible": ["advantage_plus"]
+  },
+  "trucking_application": {
+    "expected_eligible_count": 4,
+    "expected_best_match": "falcon_equipment",
+    "must_include_eligible": ["falcon_equipment", "citizens_bank"],
+    "must_include_ineligible": ["advantage_plus"]
+  },
+  "startup_application": {
+    "expected_eligible_count": 2,
+    "must_include_ineligible": ["citizens_bank"],
+    "notes": "Startup businesses are restricted from many programs"
+  },
+  "challenged_credit_application": {
+    "expected_eligible_count": 1,
+    "notes": "Bankruptcy history severely limits options"
+  },
+  "ca_applicant": {
+    "must_include_ineligible": ["citizens_bank", "apex_commercial"],
+    "notes": "CA state is restricted by several lenders"
+  }
+}

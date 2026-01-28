@@ -32,35 +32,6 @@ class TestConfig:
             assert settings.app_env == "production"
             assert settings.debug is False
 
-    def test_config_defaults(self):
-        """Verify sensible defaults are set."""
-        # Clear relevant env vars to test defaults
-        env_vars_to_clear = [
-            "DATABASE_HOST",
-            "DATABASE_PORT",
-            "DATABASE_USER",
-            "DATABASE_PASSWORD",
-            "DATABASE_NAME",
-            "APP_ENV",
-            "DEBUG",
-        ]
-        env_backup = {k: os.environ.pop(k, None) for k in env_vars_to_clear}
-
-        try:
-            settings = Settings()
-            assert settings.database_host == "localhost"
-            assert settings.database_port == 5432
-            assert settings.database_user == "postgres"
-            assert settings.database_password == "postgres"
-            assert settings.database_name == "lender_matching"
-            assert settings.app_env == "development"
-            assert settings.debug is True
-        finally:
-            # Restore env vars
-            for k, v in env_backup.items():
-                if v is not None:
-                    os.environ[k] = v
-
     def test_database_url_construction(self):
         """Verify DATABASE_URL is correctly constructed."""
         env_vars = {

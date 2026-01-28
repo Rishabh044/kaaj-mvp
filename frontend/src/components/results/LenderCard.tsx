@@ -60,7 +60,7 @@ export function LenderCard({ match, isBestMatch = false }: LenderCardProps) {
           {match.is_eligible ? (
             <Badge variant="success">Eligible</Badge>
           ) : (
-            <Badge variant="danger">Not Eligible</Badge>
+            <Badge variant="error">Not Eligible</Badge>
           )}
           <button
             className="text-gray-400 hover:text-gray-600"
