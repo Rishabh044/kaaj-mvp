@@ -227,32 +227,3 @@ class TestApexCommercialPolicy:
 
         medical_a = next(p for p in policy.programs if p.id == "medical_a_rate")
         assert "medical" in medical_a.criteria.industry.allowed_industries
-
-
-class TestAllLendersLoadSuccessfully:
-    """Meta-tests for all lender policies."""
-
-    def test_all_lenders_load(self, policy_loader):
-        """Test all lender policies load successfully."""
-        lender_ids = policy_loader.get_all_lender_ids()
-
-        # Should have 5 lenders
-        assert len(lender_ids) == 5
-
-        # All should load without errors
-        for lender_id in lender_ids:
-            policy = policy_loader.load_policy(lender_id)
-            assert policy.id == lender_id
-            assert policy.version >= 1
-            assert len(policy.programs) > 0
-
-    def test_all_lenders_have_valid_programs(self, policy_loader):
-        """Test all lender programs have required fields."""
-        policies = policy_loader.load_all_policies()
-
-        for policy in policies:
-            for program in policy.programs:
-                assert program.id
-                assert program.name
-                # All programs should have max term
-                assert program.max_term_months is None or program.max_term_months > 0

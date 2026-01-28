@@ -35,15 +35,12 @@ class PolicyLoader:
         if policies_dir is None:
             policies_dir = Path(__file__).parent / "lenders"
         self.policies_dir = Path(policies_dir)
-        self._cache: dict[str, LenderPolicy] = {}
-        self._load_errors: dict[str, PolicyLoadError] = {}
 
-    def load_policy(self, lender_id: str, use_cache: bool = True) -> LenderPolicy:
+    def load_policy(self, lender_id: str) -> LenderPolicy:
         """Load and validate a single lender policy.
 
         Args:
             lender_id: The lender identifier (filename without .yaml extension)
-            use_cache: Whether to use cached policy if available
 
         Returns:
             Validated LenderPolicy object
@@ -51,46 +48,32 @@ class PolicyLoader:
         Raises:
             PolicyLoadError: If the policy file doesn't exist or is invalid
         """
-        # Check cache first
-        if use_cache and lender_id in self._cache:
-            return self._cache[lender_id]
-
-        # Check if we've already tried and failed to load this policy
-        if lender_id in self._load_errors:
-            raise self._load_errors[lender_id]
-
         policy_path = self.policies_dir / f"{lender_id}.yaml"
 
         # Check file exists
         if not policy_path.exists():
-            error = PolicyLoadError(
+            raise PolicyLoadError(
                 lender_id,
                 f"Policy file not found: {policy_path}",
                 {"path": str(policy_path)},
             )
-            self._load_errors[lender_id] = error
-            raise error
 
         # Load YAML
         try:
             with open(policy_path, "r", encoding="utf-8") as f:
                 raw_data = yaml.safe_load(f)
         except yaml.YAMLError as e:
-            error = PolicyLoadError(
+            raise PolicyLoadError(
                 lender_id,
                 f"Invalid YAML syntax: {e}",
                 {"yaml_error": str(e)},
             )
-            self._load_errors[lender_id] = error
-            raise error
 
         if raw_data is None:
-            error = PolicyLoadError(
+            raise PolicyLoadError(
                 lender_id,
                 "Policy file is empty",
             )
-            self._load_errors[lender_id] = error
-            raise error
 
         # Validate with Pydantic
         try:
@@ -101,22 +84,16 @@ class PolicyLoader:
                 f"Schema validation failed: {e.error_count()} errors",
                 {"validation_errors": e.errors()},
             )
-            self._load_errors[lender_id] = error
             raise error
 
         # Verify ID matches filename
         if policy.id != lender_id:
-            error = PolicyLoadError(
+            raise PolicyLoadError(
                 lender_id,
                 f"Policy ID '{policy.id}' does not match filename '{lender_id}'",
                 {"policy_id": policy.id, "expected_id": lender_id},
             )
-            self._load_errors[lender_id] = error
-            raise error
 
-        # Cache and return
-        self._cache[lender_id] = policy
-        logger.info(f"Loaded policy: {lender_id} (version {policy.version})")
         return policy
 
     def get_all_lender_ids(self) -> list[str]:
@@ -169,41 +146,3 @@ class PolicyLoader:
             List of successfully loaded LenderPolicy objects
         """
         return self.load_all_policies(skip_errors=True)
-
-    def reload(self) -> None:
-        """Clear the cache and reload all policies."""
-        self._cache.clear()
-        self._load_errors.clear()
-        logger.info("Policy cache cleared")
-
-    def is_cached(self, lender_id: str) -> bool:
-        """Check if a policy is currently cached.
-
-        Args:
-            lender_id: The lender identifier
-
-        Returns:
-            True if the policy is in the cache
-        """
-        return lender_id in self._cache
-
-    def get_cached_policy(self, lender_id: str) -> Optional[LenderPolicy]:
-        """Get a policy from cache without loading.
-
-        Args:
-            lender_id: The lender identifier
-
-        Returns:
-            The cached policy or None if not cached
-        """
-        return self._cache.get(lender_id)
-
-    def invalidate(self, lender_id: str) -> None:
-        """Remove a specific policy from the cache.
-
-        Args:
-            lender_id: The lender identifier to invalidate
-        """
-        self._cache.pop(lender_id, None)
-        self._load_errors.pop(lender_id, None)
-        logger.debug(f"Invalidated cache for: {lender_id}")

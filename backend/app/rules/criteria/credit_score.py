@@ -38,7 +38,7 @@ class CreditScoreRule(Rule):
             rule_name=rule_name,
             required_value=str(min_score),
             actual_value="Not provided",
-            message=f"{score_type.title()} score not provided",
+            message=f"{score_type.title()} credit score not provided",
         )
 
     def _handle_score_pass(
@@ -50,7 +50,7 @@ class CreditScoreRule(Rule):
             rule_name=rule_name,
             required_value=str(min_score),
             actual_value=str(actual_score),
-            message=f"{score_type.title()} score {actual_score} meets minimum {min_score}",
+            message=f"{score_type.title()} credit score {actual_score} meets minimum {min_score}",
             score=score,
         )
 
@@ -62,7 +62,7 @@ class CreditScoreRule(Rule):
             rule_name=rule_name,
             required_value=str(min_score),
             actual_value=str(actual_score),
-            message=f"{score_type.title()} score {actual_score} below minimum {min_score}",
+            message=f"{score_type.title()} credit score {actual_score} below minimum {min_score}",
         )
 
     def evaluate(
