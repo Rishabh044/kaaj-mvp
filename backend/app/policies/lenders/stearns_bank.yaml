@@ -1,0 +1,220 @@
+# Stearns Bank Equipment Finance Credit Box
+# Source: EF Credit Box 4.14.2025.pdf
+
+id: stearns_bank
+name: "Stearns Bank"
+version: 1
+description: "Equipment finance with tiered credit criteria based on FICO and PayNet scores"
+contact_email: null
+contact_phone: null
+
+restrictions:
+  geographic:
+    excluded_states: []  # No state restrictions mentioned
+  industry:
+    excluded_industries:
+      - gaming
+      - gambling
+      - casino
+      - hazmat
+      - hazardous_materials
+      - oil_gas
+      - petroleum
+      - msb
+      - money_service_business
+      - adult_entertainment
+      - non_essential
+      - foreign
+      - no_physical_location
+      - weapons
+      - firearms
+      - beauty_salon
+      - tanning_salon
+      - tattoo
+      - piercing
+      - aesthetic
+      - real_estate
+      - otr
+      - over_the_road
+      - restaurant
+      - car_wash
+  transaction:
+    allows_private_party: true
+    allows_sale_leaseback: true
+    allows_refinance: true
+
+programs:
+  # Standard programs with PayNet
+  - id: tier_1_standard
+    name: "Tier 1 - Standard (with PayNet)"
+    description: "Best rates for established businesses with strong personal and business credit"
+    is_app_only: true
+    min_amount: 1000000   # $10,000
+    max_amount: 25000000  # $250,000 estimated
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 725
+      business:
+        min_time_in_business_years: 3
+      credit_history:
+        max_bankruptcies: 0
+        bankruptcy_min_discharge_years: 7  # No BK in last 7 years
+        allows_active_bankruptcy: false
+      # Note: PayNet 685+ also required (separate rule)
+
+  - id: tier_2_standard
+    name: "Tier 2 - Standard (with PayNet)"
+    description: "Mid-tier pricing for established businesses"
+    is_app_only: true
+    min_amount: 1000000
+    max_amount: 25000000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 710
+      business:
+        min_time_in_business_years: 3
+      credit_history:
+        max_bankruptcies: 0
+        bankruptcy_min_discharge_years: 7
+        allows_active_bankruptcy: false
+      # Note: PayNet 675+ also required
+
+  - id: tier_3_standard
+    name: "Tier 3 - Standard (with PayNet)"
+    description: "Entry tier for newer businesses with acceptable credit"
+    is_app_only: true
+    min_amount: 1000000
+    max_amount: 25000000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 700
+      business:
+        min_time_in_business_years: 2
+      credit_history:
+        max_bankruptcies: 0
+        bankruptcy_min_discharge_years: 7
+        allows_active_bankruptcy: false
+      # Note: PayNet 665+ also required
+
+  # Programs without PayNet (higher personal credit requirements)
+  - id: tier_1_no_paynet
+    name: "Tier 1 - No PayNet"
+    description: "For businesses without PayNet history - requires higher FICO and longer TIB"
+    is_app_only: true
+    min_amount: 1000000
+    max_amount: 25000000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 735
+      business:
+        min_time_in_business_years: 5
+      credit_history:
+        max_bankruptcies: 0
+        bankruptcy_min_discharge_years: 7
+        allows_active_bankruptcy: false
+
+  - id: tier_2_no_paynet
+    name: "Tier 2 - No PayNet"
+    description: "Mid-tier for businesses without PayNet"
+    is_app_only: true
+    min_amount: 1000000
+    max_amount: 25000000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 720
+      business:
+        min_time_in_business_years: 3
+      credit_history:
+        max_bankruptcies: 0
+        bankruptcy_min_discharge_years: 7
+        allows_active_bankruptcy: false
+
+  - id: tier_3_no_paynet
+    name: "Tier 3 - No PayNet"
+    description: "Entry tier for businesses without PayNet"
+    is_app_only: true
+    min_amount: 1000000
+    max_amount: 25000000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 710
+      business:
+        min_time_in_business_years: 2
+      credit_history:
+        max_bankruptcies: 0
+        bankruptcy_min_discharge_years: 7
+        allows_active_bankruptcy: false
+
+  # Corporate only programs (no personal guarantee)
+  - id: tier_1_corp_only
+    name: "Tier 1 - Corp Only"
+    description: "For corporations with strong PayNet and long operating history"
+    is_app_only: false
+    min_amount: 1000000
+    max_amount: 50000000  # Typically higher limits for corp only
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: paynet
+        min: 700
+      business:
+        min_time_in_business_years: 10
+      credit_history:
+        max_bankruptcies: 0
+        bankruptcy_min_discharge_years: 7
+        allows_active_bankruptcy: false
+
+  - id: tier_2_corp_only
+    name: "Tier 2 - Corp Only"
+    description: "Mid-tier corporate program"
+    is_app_only: false
+    min_amount: 1000000
+    max_amount: 50000000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: paynet
+        min: 690
+      business:
+        min_time_in_business_years: 5
+      credit_history:
+        max_bankruptcies: 0
+        bankruptcy_min_discharge_years: 7
+        allows_active_bankruptcy: false
+
+  - id: tier_3_corp_only
+    name: "Tier 3 - Corp Only"
+    description: "Entry tier corporate program"
+    is_app_only: false
+    min_amount: 1000000
+    max_amount: 50000000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: paynet
+        min: 680
+      business:
+        min_time_in_business_years: 5
+      credit_history:
+        max_bankruptcies: 0
+        bankruptcy_min_discharge_years: 7
+        allows_active_bankruptcy: false
+
+scoring:
+  credit_score_weight: 0.30
+  time_in_business_weight: 0.25
+  loan_amount_weight: 0.15
+  equipment_fit_weight: 0.15
+  credit_history_weight: 0.15

@@ -1,0 +1,228 @@
+# Citizens Bank Equipment Finance Program 2025
+# Source: 2025 Program Guidelines UPDATED.pdf
+
+id: citizens_bank
+name: "Citizens Bank"
+version: 1
+description: "Equipment Finance Program with tiered application-only options up to $75,000 and full doc up to $1,000,000"
+contact_email: "joey.walter@thecitizensbank.net"
+contact_phone: "501-451-5113"
+
+restrictions:
+  geographic:
+    excluded_states: ["CA"]  # California excluded per policy
+  industry:
+    excluded_industries:
+      - cannabis
+      - marijuana
+  transaction:
+    allows_private_party: true  # With title upfront, DOT and 3rd party inspection
+    allows_sale_leaseback: false
+    allows_refinance: false
+
+equipment_matrices:
+  - category: class_8_truck
+    entries:
+      - max_mileage: 20000000  # 0-200,000 miles
+        term_months: 60
+      - min_mileage: 20000001
+        max_mileage: 40000000  # 200,001-400,000 miles
+        term_months: 48
+      - min_mileage: 40000001
+        max_mileage: 60000000  # 400,001-600,000 miles
+        term_months: 36
+      # Over 600,000 not desired
+
+  - category: class_8_trailer
+    entries:
+      - min_year: 2020
+        term_months: 60
+      - min_year: 2016
+        max_year: 2019
+        term_months: 48
+      - min_year: 2014
+        max_year: 2015
+        term_months: 36
+      - min_year: 2011
+        max_year: 2013
+        term_months: 24
+
+  - category: dump_truck
+    entries:
+      - min_year: 2021
+        term_months: 60
+      - min_year: 2019
+        max_year: 2020
+        term_months: 48
+      - min_year: 2015
+        max_year: 2018
+        term_months: 36
+
+  - category: medium_duty_truck
+    entries:
+      - min_year: 2025  # New
+        term_months: 60
+      - min_year: 2022
+        max_year: 2024
+        term_months: 48
+      - min_year: 2019
+        max_year: 2021
+        term_months: 36
+      - min_year: 2016
+        max_year: 2018
+        term_months: 24
+      # Mileage over 350,000 not desired; 250,000-349,999 = 24 months
+
+  - category: light_duty_truck
+    entries:
+      - min_year: 2025  # New
+        term_months: 60
+      - min_year: 2022
+        max_year: 2024
+        term_months: 48
+      - min_year: 2020
+        max_year: 2021
+        term_months: 36
+      # Mileage over 175,001 not desired; 125,000-175,000 = 24 months
+
+  - category: construction_heavy
+    entries:
+      - min_year: 2022
+        term_months: 60
+      - min_year: 2018
+        max_year: 2021
+        term_months: 48
+      - min_year: 2015
+        max_year: 2017
+        term_months: 36
+      - min_year: 2006
+        max_year: 2014
+        term_months: 24
+
+  - category: construction_medium
+    entries:
+      - min_year: 2022
+        term_months: 60
+      - min_year: 2018
+        max_year: 2021
+        term_months: 48
+      - min_year: 2015
+        max_year: 2017
+        term_months: 36
+
+  - category: construction_light
+    entries:
+      - min_year: 2022
+        term_months: 60
+      - min_year: 2018
+        max_year: 2021
+        term_months: 42
+      - min_year: 2015
+        max_year: 2017
+        term_months: 30
+
+programs:
+  - id: tier_1_general
+    name: "Tier 1 - General Program"
+    description: "Application only up to $75,000 for established businesses"
+    is_app_only: true
+    min_amount: 1000000  # $10,000
+    max_amount: 7500000  # $75,000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: transunion
+        min: 700
+      business:
+        min_time_in_business_years: 2
+        requires_homeowner: true
+        requires_cdl: conditional  # Required if trucking
+        requires_us_citizen: true
+      credit_history:
+        max_bankruptcies: 1
+        bankruptcy_min_discharge_years: 5
+        allows_active_bankruptcy: false
+        max_open_judgements: 0
+        allows_foreclosure: false
+        allows_repossession: false
+        max_tax_liens: 0
+
+  - id: tier_2_startup
+    name: "Tier 2 - Start Up Program"
+    description: "Application only up to $50,000 for newer businesses with strong guarantor"
+    is_app_only: true
+    min_amount: 1000000  # $10,000
+    max_amount: 5000000  # $50,000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: transunion
+        min: 700
+      business:
+        min_time_in_business_years: 0  # Startup allowed
+        requires_homeowner: true
+        requires_cdl: conditional
+        min_cdl_years: 5  # Class A CDL for 5 years if trucking
+        min_industry_experience_years: 5  # 5 years verifiable industry experience
+        requires_us_citizen: true
+      credit_history:
+        max_bankruptcies: 1
+        bankruptcy_min_discharge_years: 5
+        allows_active_bankruptcy: false
+        max_open_judgements: 0
+        allows_foreclosure: false
+        allows_repossession: false
+        max_tax_liens: 0
+
+  - id: tier_2_non_homeowner
+    name: "Tier 2 - Non Homeowner Program"
+    description: "Application only up to $50,000 for non-homeowners with strong credit and residence history"
+    is_app_only: true
+    min_amount: 1000000  # $10,000
+    max_amount: 5000000  # $50,000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: transunion
+        min: 700
+      business:
+        min_time_in_business_years: 2
+        requires_homeowner: false  # Non-homeowner program
+        requires_cdl: conditional
+        requires_us_citizen: true
+        # Note: 5 years at current residence required (not modeled here)
+      credit_history:
+        max_bankruptcies: 1
+        bankruptcy_min_discharge_years: 5
+        allows_active_bankruptcy: false
+        max_open_judgements: 0
+        allows_foreclosure: false
+        allows_repossession: false
+        max_tax_liens: 0
+
+  - id: tier_3_full_doc
+    name: "Tier 3 - Full Financials"
+    description: "Full documentation program for $75,000-$1,000,000 or deals not fitting app-only tiers"
+    is_app_only: false
+    min_amount: 7500000   # $75,000
+    max_amount: 100000000  # $1,000,000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: transunion
+        min: 650  # More flexible with full docs
+      business:
+        min_time_in_business_years: 2
+        requires_cdl: conditional
+        requires_us_citizen: true
+      credit_history:
+        max_bankruptcies: 1
+        bankruptcy_min_discharge_years: 5
+        allows_active_bankruptcy: false
+
+scoring:
+  credit_score_weight: 0.30
+  time_in_business_weight: 0.25
+  loan_amount_weight: 0.20
+  equipment_fit_weight: 0.15
+  credit_history_weight: 0.10

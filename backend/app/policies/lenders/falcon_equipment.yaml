@@ -1,0 +1,187 @@
+# Falcon Equipment Finance - Rates & Programs
+# Source: 112025 Rates - STANDARD.pdf
+# A Division of Falcon National Bank
+
+id: falcon_equipment
+name: "Falcon Equipment Finance"
+version: 1
+description: "Equipment finance with tiered rates based on credit rating and loan amount"
+contact_email: "ETickner@FalconEquipmentFinance.com"
+contact_phone: "651-332-6517"
+
+restrictions:
+  geographic:
+    excluded_states: []  # No state restrictions mentioned
+  industry:
+    excluded_industries: []  # General equipment finance
+  transaction:
+    allows_private_party: true  # +1.00% rate adjustment
+    allows_sale_leaseback: true
+    allows_refinance: true
+
+equipment_matrices:
+  - category: class_8_truck
+    entries:
+      - min_year: 2015  # 10 years and newer for trucking
+        term_months: 60
+  - category: class_8_trailer
+    entries:
+      - min_year: 2015  # 10 years and newer
+        term_months: 60
+  - category: reefer_trailer
+    entries:
+      - min_year: 2018  # Under 7 years old
+        term_months: 60
+
+programs:
+  # Commercial (non-trucking) programs
+  - id: commercial_a_credit
+    name: "Commercial A Credit"
+    description: "Best rates for commercial equipment with excellent credit"
+    is_app_only: true
+    min_amount: 1500000   # $15,000
+    max_amount: 25000000  # $250,000 app-only for commercial
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 680
+      business:
+        min_time_in_business_years: 3
+      credit_history:
+        max_bankruptcies: 1
+        bankruptcy_min_discharge_years: 15  # 15+ years discharged
+        allows_active_bankruptcy: false
+      equipment:
+        excluded_categories:
+          - class_8_truck
+          - semi_truck
+          - logging
+
+  - id: commercial_b_credit
+    name: "Commercial B Credit"
+    description: "Good rates for commercial equipment with good credit"
+    is_app_only: true
+    min_amount: 1500000
+    max_amount: 25000000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 650  # Lower tier
+      business:
+        min_time_in_business_years: 3
+      credit_history:
+        max_bankruptcies: 1
+        bankruptcy_min_discharge_years: 15
+        allows_active_bankruptcy: false
+      equipment:
+        excluded_categories:
+          - class_8_truck
+          - semi_truck
+          - logging
+
+  - id: manufacturing_a_credit
+    name: "Manufacturing A Credit"
+    description: "Machine tools and woodworking equipment"
+    is_app_only: true
+    min_amount: 1500000
+    max_amount: 35000000  # $350,000 for manufacturing
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 680
+      business:
+        min_time_in_business_years: 3
+      credit_history:
+        max_bankruptcies: 1
+        bankruptcy_min_discharge_years: 15
+        allows_active_bankruptcy: false
+      industry:
+        allowed_industries:
+          - manufacturing
+          - machine_tools
+          - woodworking
+
+  # Trucking programs (stricter requirements)
+  - id: trucking_a_credit
+    name: "Trucking A Credit"
+    description: "For established trucking companies with 5+ trucks and excellent credit"
+    is_app_only: true
+    min_amount: 1500000
+    max_amount: 15000000  # $150,000 for trucking
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 700  # Higher for trucking
+      business:
+        min_time_in_business_years: 5
+        min_fleet_size: 5  # Must have 5+ trucks
+      credit_history:
+        max_bankruptcies: 1
+        bankruptcy_min_discharge_years: 15
+        allows_active_bankruptcy: false
+      equipment:
+        allowed_categories:
+          - class_8_truck
+          - class_8_trailer
+          - semi_truck
+          - reefer_trailer
+        max_age_years: 10
+
+  - id: trucking_b_credit
+    name: "Trucking B Credit"
+    description: "For established trucking companies with good credit"
+    is_app_only: true
+    min_amount: 1500000
+    max_amount: 15000000
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 680  # Slightly lower but still B credit
+      business:
+        min_time_in_business_years: 5
+        min_fleet_size: 5
+      credit_history:
+        max_bankruptcies: 1
+        bankruptcy_min_discharge_years: 15
+        allows_active_bankruptcy: false
+      equipment:
+        allowed_categories:
+          - class_8_truck
+          - class_8_trailer
+          - semi_truck
+          - reefer_trailer
+        max_age_years: 10
+
+  - id: logging_a_credit
+    name: "Logging A Credit"
+    description: "Logging equipment for established operators"
+    is_app_only: true
+    min_amount: 1500000
+    max_amount: 15000000  # $150,000 for logging
+    max_term_months: 60
+    criteria:
+      credit_score:
+        type: fico
+        min: 680
+      business:
+        min_time_in_business_years: 3
+      credit_history:
+        max_bankruptcies: 1
+        bankruptcy_min_discharge_years: 15
+        allows_active_bankruptcy: false
+      industry:
+        allowed_industries:
+          - logging
+          - forestry
+
+scoring:
+  credit_score_weight: 0.30
+  time_in_business_weight: 0.20
+  loan_amount_weight: 0.20
+  equipment_fit_weight: 0.15
+  credit_history_weight: 0.15
