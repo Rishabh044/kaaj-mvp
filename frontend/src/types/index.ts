@@ -4,3 +4,5 @@
 
 export * from './common';
 export * from './application';
+export * from './matching';
+export * from './lender';

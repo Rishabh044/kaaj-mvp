@@ -3,3 +3,5 @@
  */
 
 export { ApplicationPage } from './ApplicationPage';
+export { ResultsPage } from './ResultsPage';
+export * from './admin';

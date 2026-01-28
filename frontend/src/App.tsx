@@ -1,5 +1,11 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { ApplicationPage } from './pages';
+import {
+  ApplicationPage,
+  ResultsPage,
+  LenderListPage,
+  LenderDetailPage,
+  LenderCreatePage,
+} from './pages';
 import { Button } from './components/ui';
 
 function HomePage() {
@@ -22,9 +28,14 @@ function HomePage() {
               <p className="mt-2 text-gray-500">
                 Match loan applications with the best lender policies.
               </p>
-              <div className="mt-6">
+              <div className="mt-6 flex justify-center gap-4">
                 <Link to="/apply">
                   <Button size="lg">Start New Application</Button>
+                </Link>
+                <Link to="/admin/lenders">
+                  <Button size="lg" variant="secondary">
+                    Manage Lenders
+                  </Button>
                 </Link>
               </div>
             </div>
@@ -41,7 +52,10 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/apply" element={<ApplicationPage />} />
-        <Route path="/results/:applicationId" element={<div>Results Page (PR-9)</div>} />
+        <Route path="/results/:applicationId" element={<ResultsPage />} />
+        <Route path="/admin/lenders" element={<LenderListPage />} />
+        <Route path="/admin/lenders/new" element={<LenderCreatePage />} />
+        <Route path="/admin/lenders/:lenderId" element={<LenderDetailPage />} />
       </Routes>
     </BrowserRouter>
   );
